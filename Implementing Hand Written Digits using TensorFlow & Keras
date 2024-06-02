@@ -1,0 +1,360 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "id": "1429d17e-ca22-4982-9213-3dbbd9c22508",
+   "metadata": {},
+   "source": [
+    "# Implementing Hand Digit Recognition Model Using TensorFlow & Kreas"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "de83b830-b888-4445-9c2a-3db8248e1ed4",
+   "metadata": {},
+   "source": [
+    "1. Loading the dependencies"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "id": "649a8261-fc1d-4a68-94e5-4540fe677e5a",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import numpy as np\n",
+    "import tensorflow as tf\n",
+    "from tensorflow import keras\n",
+    "from tensorflow.keras.datasets import mnist\n",
+    "from tensorflow.keras.models import Sequential\n",
+    "from tensorflow.keras.layers import Dense, Dropout, Flatten, Conv2D, MaxPooling2D\n",
+    "from tensorflow.keras import backend as K"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "10c3f935-1963-488a-b677-5876d9adadc0",
+   "metadata": {},
+   "source": [
+    "2. Loading the Mnist datset which contains the hand written digits data."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "id": "af70b23b-f966-4d67-9d41-0b9466f03cf0",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "(60000, 28, 28) (60000,)\n"
+     ]
+    }
+   ],
+   "source": [
+    "(x_train, y_train), (x_test, y_test) = mnist.load_data()\n",
+    "print(x_train.shape, y_train.shape)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "a6d31bde-e21d-43b0-9bf6-29bc3adff2d0",
+   "metadata": {},
+   "source": [
+    "3. Reshaping the images to a 28x28 matrix"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "id": "09ee06e0-1b00-4dcf-9b66-c6953cbd79ba",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "x_train = x_train.reshape(x_train.shape[0], 28, 28, 1)\n",
+    "x_test = x_test.reshape(x_test.shape[0], 28, 28,1)\n",
+    "input_shape = (28, 28, 1)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "0f2ba7ba-dee0-4c8e-a8dd-981d562e174a",
+   "metadata": {},
+   "source": [
+    "4. Performing One Hot Encoding to the Target or dependent Variables"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "id": "7612f8f3-6360-4529-a6d1-4bb81618ced3",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "y_train = keras.utils.to_categorical(y_train, 10)\n",
+    "y_test = keras.utils.to_categorical(y_test, 10)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "id": "71828d55-a5df-4b02-9ba6-4a48f2415b65",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "x_train shape : (60000, 28, 28, 1)\n",
+      "60000 train samples\n",
+      "10000 test samples\n"
+     ]
+    }
+   ],
+   "source": [
+    "x_train = x_train.astype('float32')\n",
+    "x_test = x_test.astype('float32')\n",
+    "x_train /= 255\n",
+    "x_test /= 255\n",
+    "print('x_train shape :', x_train.shape)\n",
+    "print(x_train.shape[0], 'train samples')\n",
+    "print(x_test.shape[0], 'test samples')"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "40b2aa09-1971-4fe2-8c5a-975313be61ce",
+   "metadata": {},
+   "source": [
+    "5. Defining the Neural Network (Sequential Model)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "id": "7c7bc6b2-891b-469b-b1d3-d2790909c0b7",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "batch_size = 128\n",
+    "num_classes = 10\n",
+    "\n",
+    "model = Sequential()\n",
+    "model.add(Conv2D(32, kernel_size=(5,5), activation='relu', input_shape=input_shape))\n",
+    "model.add(MaxPooling2D(pool_size=(2,2)))\n",
+    "model.add(Conv2D(64, (3,3), activation='relu'))\n",
+    "model.add(MaxPooling2D(pool_size=(2,2)))\n",
+    "model.add(Flatten())\n",
+    "model.add(Dense(128, activation='relu'))\n",
+    "model.add(Dropout(0.3))\n",
+    "model.add(Dense(64, activation='relu'))\n",
+    "model.add(Dropout(0.5))\n",
+    "model.add(Dense(num_classes, activation='softmax'))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "0312820f-c58f-4e56-b2fa-cbca0d552506",
+   "metadata": {},
+   "source": [
+    "Optimising the model using Adam Optimizer (Model Compiling)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "id": "66bbf942-fb5e-4c75-8485-df049a4ead58",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "model.compile(loss=keras.losses.categorical_crossentropy, optimizer=keras.optimizers.Adam(),metrics=['accuracy'])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "id": "f12eb9f3-b2d7-41e1-af87-de2f74ced0c3",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Epoch 1/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m16s\u001b[0m 28ms/step - accuracy: 0.7396 - loss: 0.7812 - val_accuracy: 0.9831 - val_loss: 0.0554\n",
+      "Epoch 2/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m14s\u001b[0m 31ms/step - accuracy: 0.9693 - loss: 0.1163 - val_accuracy: 0.9884 - val_loss: 0.0387\n",
+      "Epoch 3/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m14s\u001b[0m 29ms/step - accuracy: 0.9784 - loss: 0.0825 - val_accuracy: 0.9869 - val_loss: 0.0423\n",
+      "Epoch 4/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m13s\u001b[0m 28ms/step - accuracy: 0.9823 - loss: 0.0637 - val_accuracy: 0.9899 - val_loss: 0.0340\n",
+      "Epoch 5/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m14s\u001b[0m 29ms/step - accuracy: 0.9867 - loss: 0.0523 - val_accuracy: 0.9919 - val_loss: 0.0260\n",
+      "Epoch 6/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m13s\u001b[0m 29ms/step - accuracy: 0.9881 - loss: 0.0451 - val_accuracy: 0.9898 - val_loss: 0.0296\n",
+      "Epoch 7/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m13s\u001b[0m 28ms/step - accuracy: 0.9892 - loss: 0.0423 - val_accuracy: 0.9921 - val_loss: 0.0263\n",
+      "Epoch 8/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m13s\u001b[0m 29ms/step - accuracy: 0.9912 - loss: 0.0337 - val_accuracy: 0.9914 - val_loss: 0.0277\n",
+      "Epoch 9/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m14s\u001b[0m 29ms/step - accuracy: 0.9922 - loss: 0.0302 - val_accuracy: 0.9930 - val_loss: 0.0265\n",
+      "Epoch 10/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m14s\u001b[0m 29ms/step - accuracy: 0.9926 - loss: 0.0280 - val_accuracy: 0.9928 - val_loss: 0.0247\n",
+      "Epoch 11/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m14s\u001b[0m 30ms/step - accuracy: 0.9932 - loss: 0.0246 - val_accuracy: 0.9923 - val_loss: 0.0299\n",
+      "Epoch 12/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m14s\u001b[0m 30ms/step - accuracy: 0.9932 - loss: 0.0239 - val_accuracy: 0.9935 - val_loss: 0.0277\n",
+      "Epoch 13/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m15s\u001b[0m 32ms/step - accuracy: 0.9947 - loss: 0.0180 - val_accuracy: 0.9932 - val_loss: 0.0247\n",
+      "Epoch 14/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m11s\u001b[0m 23ms/step - accuracy: 0.9952 - loss: 0.0167 - val_accuracy: 0.9938 - val_loss: 0.0256\n",
+      "Epoch 15/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m10s\u001b[0m 21ms/step - accuracy: 0.9952 - loss: 0.0173 - val_accuracy: 0.9929 - val_loss: 0.0292\n",
+      "Epoch 16/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m10s\u001b[0m 21ms/step - accuracy: 0.9959 - loss: 0.0165 - val_accuracy: 0.9941 - val_loss: 0.0237\n",
+      "Epoch 17/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m10s\u001b[0m 22ms/step - accuracy: 0.9954 - loss: 0.0160 - val_accuracy: 0.9934 - val_loss: 0.0281\n",
+      "Epoch 18/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m10s\u001b[0m 22ms/step - accuracy: 0.9962 - loss: 0.0164 - val_accuracy: 0.9933 - val_loss: 0.0326\n",
+      "Epoch 19/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m10s\u001b[0m 22ms/step - accuracy: 0.9964 - loss: 0.0134 - val_accuracy: 0.9913 - val_loss: 0.0437\n",
+      "Epoch 20/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m10s\u001b[0m 21ms/step - accuracy: 0.9963 - loss: 0.0126 - val_accuracy: 0.9931 - val_loss: 0.0315\n",
+      "Epoch 21/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m10s\u001b[0m 22ms/step - accuracy: 0.9961 - loss: 0.0141 - val_accuracy: 0.9936 - val_loss: 0.0271\n",
+      "Epoch 22/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m10s\u001b[0m 21ms/step - accuracy: 0.9975 - loss: 0.0082 - val_accuracy: 0.9915 - val_loss: 0.0363\n",
+      "Epoch 23/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m10s\u001b[0m 22ms/step - accuracy: 0.9970 - loss: 0.0118 - val_accuracy: 0.9938 - val_loss: 0.0303\n",
+      "Epoch 24/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m11s\u001b[0m 22ms/step - accuracy: 0.9971 - loss: 0.0096 - val_accuracy: 0.9933 - val_loss: 0.0349\n",
+      "Epoch 25/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m10s\u001b[0m 22ms/step - accuracy: 0.9969 - loss: 0.0099 - val_accuracy: 0.9933 - val_loss: 0.0361\n",
+      "Epoch 26/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m10s\u001b[0m 22ms/step - accuracy: 0.9963 - loss: 0.0135 - val_accuracy: 0.9941 - val_loss: 0.0252\n",
+      "Epoch 27/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m10s\u001b[0m 22ms/step - accuracy: 0.9974 - loss: 0.0084 - val_accuracy: 0.9938 - val_loss: 0.0307\n",
+      "Epoch 28/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m10s\u001b[0m 22ms/step - accuracy: 0.9976 - loss: 0.0086 - val_accuracy: 0.9941 - val_loss: 0.0274\n",
+      "Epoch 29/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m10s\u001b[0m 22ms/step - accuracy: 0.9971 - loss: 0.0100 - val_accuracy: 0.9941 - val_loss: 0.0296\n",
+      "Epoch 30/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m10s\u001b[0m 22ms/step - accuracy: 0.9975 - loss: 0.0089 - val_accuracy: 0.9946 - val_loss: 0.0310\n",
+      "Epoch 31/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m10s\u001b[0m 22ms/step - accuracy: 0.9975 - loss: 0.0084 - val_accuracy: 0.9942 - val_loss: 0.0294\n",
+      "Epoch 32/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m10s\u001b[0m 22ms/step - accuracy: 0.9976 - loss: 0.0084 - val_accuracy: 0.9931 - val_loss: 0.0331\n",
+      "Epoch 33/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m11s\u001b[0m 23ms/step - accuracy: 0.9972 - loss: 0.0096 - val_accuracy: 0.9946 - val_loss: 0.0275\n",
+      "Epoch 34/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m10s\u001b[0m 22ms/step - accuracy: 0.9981 - loss: 0.0063 - val_accuracy: 0.9948 - val_loss: 0.0289\n",
+      "Epoch 35/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m10s\u001b[0m 22ms/step - accuracy: 0.9978 - loss: 0.0079 - val_accuracy: 0.9941 - val_loss: 0.0368\n",
+      "Epoch 36/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m10s\u001b[0m 22ms/step - accuracy: 0.9978 - loss: 0.0068 - val_accuracy: 0.9936 - val_loss: 0.0362\n",
+      "Epoch 37/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m10s\u001b[0m 22ms/step - accuracy: 0.9982 - loss: 0.0054 - val_accuracy: 0.9941 - val_loss: 0.0459\n",
+      "Epoch 38/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m10s\u001b[0m 22ms/step - accuracy: 0.9977 - loss: 0.0077 - val_accuracy: 0.9934 - val_loss: 0.0359\n",
+      "Epoch 39/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m10s\u001b[0m 22ms/step - accuracy: 0.9980 - loss: 0.0075 - val_accuracy: 0.9931 - val_loss: 0.0381\n",
+      "Epoch 40/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m10s\u001b[0m 22ms/step - accuracy: 0.9981 - loss: 0.0085 - val_accuracy: 0.9938 - val_loss: 0.0388\n",
+      "Epoch 41/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m10s\u001b[0m 22ms/step - accuracy: 0.9979 - loss: 0.0076 - val_accuracy: 0.9938 - val_loss: 0.0375\n",
+      "Epoch 42/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m10s\u001b[0m 22ms/step - accuracy: 0.9976 - loss: 0.0074 - val_accuracy: 0.9934 - val_loss: 0.0436\n",
+      "Epoch 43/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m11s\u001b[0m 23ms/step - accuracy: 0.9979 - loss: 0.0072 - val_accuracy: 0.9937 - val_loss: 0.0329\n",
+      "Epoch 44/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m10s\u001b[0m 22ms/step - accuracy: 0.9985 - loss: 0.0087 - val_accuracy: 0.9931 - val_loss: 0.0370\n",
+      "Epoch 45/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m11s\u001b[0m 22ms/step - accuracy: 0.9982 - loss: 0.0077 - val_accuracy: 0.9935 - val_loss: 0.0355\n",
+      "Epoch 46/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m10s\u001b[0m 22ms/step - accuracy: 0.9982 - loss: 0.0071 - val_accuracy: 0.9931 - val_loss: 0.0470\n",
+      "Epoch 47/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m11s\u001b[0m 23ms/step - accuracy: 0.9978 - loss: 0.0070 - val_accuracy: 0.9940 - val_loss: 0.0382\n",
+      "Epoch 48/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m11s\u001b[0m 23ms/step - accuracy: 0.9981 - loss: 0.0066 - val_accuracy: 0.9944 - val_loss: 0.0405\n",
+      "Epoch 49/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m11s\u001b[0m 23ms/step - accuracy: 0.9983 - loss: 0.0053 - val_accuracy: 0.9937 - val_loss: 0.0393\n",
+      "Epoch 50/50\n",
+      "\u001b[1m469/469\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m11s\u001b[0m 22ms/step - accuracy: 0.9984 - loss: 0.0054 - val_accuracy: 0.9943 - val_loss: 0.0336\n"
+     ]
+    }
+   ],
+   "source": [
+    "Final = model.fit(x_train,y_train, batch_size=batch_size, epochs=50, verbose=1,validation_data=(x_test,y_test))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "a42f6490-e40f-46ca-aff3-4f6ef7ba0414",
+   "metadata": {},
+   "source": [
+    "Model Evaluation"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "id": "03eb0eff-2071-40e3-92e3-9bcb1ca69b2a",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Test loss : 0.03362913057208061\n",
+      "Test Accuracy : 0.9943000078201294\n"
+     ]
+    }
+   ],
+   "source": [
+    "score = model.evaluate(x_test, y_test, verbose=0)\n",
+    "print('Test loss :', score[0])\n",
+    "print('Test Accuracy :', score[1])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "5397fdc2-7410-48fa-be78-e6d275fdab7c",
+   "metadata": {},
+   "source": [
+    "The Model is 99.43% Accurate."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "fee97227-9e05-4dae-bbb3-df02f0de33ad",
+   "metadata": {},
+   "source": [
+    "# Thanks !!!"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.11.7"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
